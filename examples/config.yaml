@@ -1,0 +1,11 @@
+project:
+  name: config
+  path: /usr/local/var/www/go/src
+environment:
+  global:
+  prod:
+    depends: global
+  qa:
+    depends: global
+  local:
+    depends: qa
