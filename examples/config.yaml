@@ -3,8 +3,12 @@ project:
   path: /usr/local/var/www/go/src
 environment:
   global:
+    web:
+      debug: true
   prod:
     depends: global
+    web:
+      debug: false
   qa:
     depends: global
   local:

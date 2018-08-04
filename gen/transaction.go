@@ -1,6 +1,9 @@
 package gen
 
-import "os"
+import (
+	"os"
+	"io/ioutil"
+)
 
 type IAppTransaction interface {
 	Apply() error
@@ -39,4 +42,35 @@ func (t *AppTransactionCreateFile) Apply() error {
 
 func (t *AppTransactionCreateFile) Revert() error {
 	return os.RemoveAll(t.Path)
+}
+
+type AppTransactionAppendFile struct {
+	Path        string
+	Data        []byte
+	currentData []byte
+}
+
+func (t *AppTransactionAppendFile) Apply() error {
+	var err error
+	t.currentData, err = ioutil.ReadFile(t.Path)
+	if err != nil {
+		return err
+	}
+	file, err := os.OpenFile(t.Path, os.O_APPEND|os.O_WRONLY, 0755)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	_, err = file.WriteAt(t.Data, int64(len(t.currentData)))
+	return err
+}
+
+func (t *AppTransactionAppendFile) Revert() error {
+	file, err := os.OpenFile(t.Path, os.O_TRUNC|os.O_WRONLY, 0755)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	_, err = file.Write(t.currentData)
+	return err
 }

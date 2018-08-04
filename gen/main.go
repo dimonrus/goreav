@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"errors"
 	"goreav/logging"
+	"gopkg.in/yaml.v2"
 )
 
 type AppTemplate map[string]interface{}
@@ -29,11 +30,20 @@ func RenderConfig(template AppTemplate) error {
 	//Env section is not required
 	if environment, ok := template[KeyWordEnvironment]; ok == true {
 		configPath := path + "/config"
+		//Create config dir
 		transactions = append(transactions, &AppTransactionCreateDir{Path: configPath, Mode: 0755})
 		//Create config files
-		for key, _ := range environment.(map[interface{}]interface{}) {
+		for key, conf := range environment.(map[interface{}]interface{}) {
 			filePath := configPath + "/" + key.(string) + ".yaml"
 			transactions = append(transactions, &AppTransactionCreateFile{Path: filePath})
+			data, err := yaml.Marshal(conf)
+			if err != nil {
+				return err
+			}
+			if conf == nil {
+				continue
+			}
+			transactions = append(transactions, &AppTransactionAppendFile{Path: filePath, Data: data})
 		}
 	}
 
@@ -57,7 +67,7 @@ func ExecTransactions(txs []IAppTransaction) error {
 		for i := *stopped; i >= 0; i-- {
 			err := transactions[i].Revert()
 			if err != nil {
-				logging.Error.Print(err)
+				logging.Error.Fatal(err)
 				return err
 			}
 		}
@@ -66,6 +76,8 @@ func ExecTransactions(txs []IAppTransaction) error {
 	return nil
 }
 
+//Function performs parse of map[string]interface and populate transaction stack
+//After that all transaction executed by order from 0 to n
 func ParseTemplate(template AppTemplate) error {
 	//Create project
 	if err := CreateProject(template); err != nil {
