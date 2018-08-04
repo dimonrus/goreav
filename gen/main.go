@@ -40,20 +40,10 @@ func RenderConfig(template AppTemplate) error {
 	return nil
 }
 
-func ParseTemplate(template AppTemplate) error {
-	//Create project
-	if err := CreateProject(template); err != nil {
-		return err
-	}
-
-	//Render config
-	if err := RenderConfig(template); err != nil {
-		return err
-	}
-
+func ExecTransactions(txs []IAppTransaction) error {
 	//Apply app transactions
 	var stopped *int
-	for index, trx := range transactions {
+	for index, trx := range txs {
 		err := trx.Apply()
 		if err != nil {
 			logging.Error.Print(err)
@@ -67,10 +57,26 @@ func ParseTemplate(template AppTemplate) error {
 		for i := *stopped; i >= 0; i-- {
 			err := transactions[i].Revert()
 			if err != nil {
+				logging.Error.Print(err)
 				return err
 			}
 		}
 	}
 
 	return nil
+}
+
+func ParseTemplate(template AppTemplate) error {
+	//Create project
+	if err := CreateProject(template); err != nil {
+		return err
+	}
+
+	//Render config
+	if err := RenderConfig(template); err != nil {
+		return err
+	}
+
+	//Exec all transaction
+	return ExecTransactions(transactions)
 }
