@@ -5,11 +5,26 @@ environment:
   global:
     web:
       debug: true
+    nested:
+      issue: 24
+      nestedText:
+        level: 10
+        pow: 10
+        cool: yes
   prod:
     depends: global
     web:
       debug: false
+    custom:
+      trololo: -10
+      textValuse: some
+      textValue: some text
   qa:
     depends: global
   local:
     depends: qa
+    custom:
+      trololo: -10
+      textValuse: some
+      textValue: some text
+      other: false

@@ -7,8 +7,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type AppTemplate map[string]interface{}
-
 var path string //full path to project
 
 var transactions AppTransactionStack
@@ -16,7 +14,7 @@ var transactions AppTransactionStack
 func CreateProject(template AppTemplate) error {
 	//Project section is required
 	if project, ok := template[KeyWordProject]; ok == true {
-		data := project.(map[interface{}]interface{})
+		data := project.(AppTemplate)
 		path = fmt.Sprintf("%s/%s", data[KeyWordPath], data[KeyWordName])
 		transactions = append(transactions, &AppTransactionCreateDir{Path: path, Mode: 0755})
 	} else {
@@ -27,24 +25,41 @@ func CreateProject(template AppTemplate) error {
 }
 
 func RenderConfig(template AppTemplate) error {
-	//Env section is not required
+	//environment section is not required
 	if environment, ok := template[KeyWordEnvironment]; ok == true {
 		configPath := path + "/config"
-		//Create config dir
+		yamlConfigPath := configPath + "/yaml"
+		//Create config dirs
 		transactions = append(transactions, &AppTransactionCreateDir{Path: configPath, Mode: 0755})
+		transactions = append(transactions, &AppTransactionCreateDir{Path: yamlConfigPath, Mode: 0755})
+
+		//Create project config struct
+		var wholeTemplate = make(AppTemplate)
+
 		//Create config files
-		for key, conf := range environment.(map[interface{}]interface{}) {
-			filePath := configPath + "/" + key.(string) + ".yaml"
+		for key, conf := range environment.(AppTemplate) {
+			wholeTemplate.Merge(conf.(AppTemplate))
+			if conf == nil {
+				continue
+			}
+			filePath := yamlConfigPath + "/" + key.(string) + ".yaml"
 			transactions = append(transactions, &AppTransactionCreateFile{Path: filePath})
 			data, err := yaml.Marshal(conf)
 			if err != nil {
 				return err
 			}
-			if conf == nil {
-				continue
-			}
 			transactions = append(transactions, &AppTransactionAppendFile{Path: filePath, Data: data})
 		}
+
+		str, err := CreateTypeStructure(wholeTemplate, "Settings")
+		if err != nil {
+			return err
+		}
+		configFilePath := configPath + "/" + KeyWordSettings + ".go"
+		transactions = append(transactions, &AppTransactionCreateFile{Path: configFilePath})
+
+		str = fmt.Sprintf("package %s\n\n%s", KeyWordSettings, str)
+		transactions = append(transactions, &AppTransactionAppendFile{Path: configFilePath, Data: []byte(str)})
 	}
 
 	return nil

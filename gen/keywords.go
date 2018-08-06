@@ -6,4 +6,5 @@ const (
 	KeyWordPath        = "path"
 	KeyWordEnvironment = "environment"
 	KeyWordDepends     = "depends"
+	KeyWordSettings    = "settings"
 )
