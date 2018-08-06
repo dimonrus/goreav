@@ -3,7 +3,6 @@ package gen
 import (
 	"fmt"
 	"errors"
-	"goreav/logging"
 	"gopkg.in/yaml.v2"
 )
 
@@ -51,6 +50,7 @@ func RenderConfig(template AppTemplate) error {
 			transactions = append(transactions, &AppTransactionAppendFile{Path: filePath, Data: data})
 		}
 
+		//Render map[interface{}]interface{} to string
 		str, err := CreateTypeStructure(wholeTemplate, "Settings")
 		if err != nil {
 			return err
@@ -60,32 +60,6 @@ func RenderConfig(template AppTemplate) error {
 
 		str = fmt.Sprintf("package %s\n\n%s", KeyWordSettings, str)
 		transactions = append(transactions, &AppTransactionAppendFile{Path: configFilePath, Data: []byte(str)})
-	}
-
-	return nil
-}
-
-func ExecTransactions(txs []IAppTransaction) error {
-	//Apply app transactions
-	var stopped *int
-	for index, trx := range txs {
-		err := trx.Apply()
-		if err != nil {
-			logging.Error.Print(err)
-			stopped = &index
-			break
-		}
-	}
-
-	//Rollback transactions
-	if stopped != nil {
-		for i := *stopped; i >= 0; i-- {
-			err := transactions[i].Revert()
-			if err != nil {
-				logging.Error.Fatal(err)
-				return err
-			}
-		}
 	}
 
 	return nil

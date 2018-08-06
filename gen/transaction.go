@@ -3,6 +3,7 @@ package gen
 import (
 	"os"
 	"io/ioutil"
+	"goreav/logging"
 )
 
 type IAppTransaction interface {
@@ -73,4 +74,30 @@ func (t *AppTransactionAppendFile) Revert() error {
 	defer file.Close()
 	_, err = file.Write(t.currentData)
 	return err
+}
+
+func ExecTransactions(txs []IAppTransaction) error {
+	//Apply app transactions
+	var stopped *int
+	for index, trx := range txs {
+		err := trx.Apply()
+		if err != nil {
+			logging.Error.Print(err)
+			stopped = &index
+			break
+		}
+	}
+
+	//Rollback transactions
+	if stopped != nil {
+		for i := *stopped; i >= 0; i-- {
+			err := transactions[i].Revert()
+			if err != nil {
+				logging.Error.Fatal(err)
+				return err
+			}
+		}
+	}
+
+	return nil
 }
