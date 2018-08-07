@@ -47,7 +47,7 @@ func CreateTypeStructure(data AppTemplate, name string) (string, error) {
 		switch value.(type) {
 		case AppTemplate:
 			//fmt spaces filedName fieldType
-			str += fmt.Sprintf("%s%s %s\n", getNestedSpaces(1), strings.Title(key.(string)), createNestedStructure(value.(AppTemplate), 2))
+			str += fmt.Sprintf("%s%s %s%s\n", getNestedSpaces(1), strings.Title(key.(string)), createNestedStructure(value.(AppTemplate), 2), getYamlTag(key.(string)))
 		default:
 			str += fmt.Sprintf("%s%s %T%s\n", getNestedSpaces(1), strings.Title(key.(string)), value, getYamlTag(key.(string)))
 		}

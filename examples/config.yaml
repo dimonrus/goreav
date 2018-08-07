@@ -19,6 +19,11 @@ environment:
       trololo: -10
       textValuse: some
       textValue: some text
+    prodValues:
+      values:
+        - one
+        - two
+        - three
   qa:
     depends: global
   local:
