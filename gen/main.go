@@ -51,10 +51,8 @@ func RenderConfig(template AppTemplate) error {
 		}
 
 		//Render map[interface{}]interface{} to string
-		str, err := CreateTypeStructure(wholeTemplate, "Settings")
-		if err != nil {
-			return err
-		}
+		str := CreateTypeStructure(wholeTemplate, "Settings", 0)
+
 		configFilePath := configPath + "/" + KeyWordSettings + ".go"
 		transactions = append(transactions, &AppTransactionCreateFile{Path: configFilePath})
 

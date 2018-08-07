@@ -26,31 +26,22 @@ func getYamlTag(key string) string {
 	return ""
 }
 
-func createNestedStructure(data AppTemplate, nestedLevel int) string {
+func CreateTypeStructure(data AppTemplate, name string, nestedLevel int) string {
 	var str string
 	for key, value := range data {
+		stringKey := key.(string)
 		switch value.(type) {
 		case AppTemplate:
-			//fmt spaces filedName fieldType yaml tag
-			str += fmt.Sprintf("%s%s %s%s\n", getNestedSpaces(nestedLevel), strings.Title(key.(string)), createNestedStructure(value.(AppTemplate), nestedLevel+1), getYamlTag(key.(string)))
+			//fmt spaces filedName struct
+			str += fmt.Sprintf("%s%s %s\n", getNestedSpaces(nestedLevel+1), strings.Title(stringKey), CreateTypeStructure(value.(AppTemplate), stringKey, nestedLevel+1))
 		default:
-			str += fmt.Sprintf("%s%s %T%s\n", getNestedSpaces(nestedLevel), strings.Title(key.(string)), value, getYamlTag(key.(string)))
-		}
-	}
-	return fmt.Sprintf("struct {\n%s%s}", str, getNestedSpaces(nestedLevel-1))
-}
-
-func CreateTypeStructure(data AppTemplate, name string) (string, error) {
-	head := fmt.Sprintf("type %s", name)
-	var str string
-	for key, value := range data {
-		switch value.(type) {
-		case AppTemplate:
 			//fmt spaces filedName fieldType
-			str += fmt.Sprintf("%s%s %s%s\n", getNestedSpaces(1), strings.Title(key.(string)), createNestedStructure(value.(AppTemplate), 2), getYamlTag(key.(string)))
-		default:
-			str += fmt.Sprintf("%s%s %T%s\n", getNestedSpaces(1), strings.Title(key.(string)), value, getYamlTag(key.(string)))
+			str += fmt.Sprintf("%s%s %T%s\n", getNestedSpaces(nestedLevel+1), strings.Title(stringKey), value, getYamlTag(stringKey))
 		}
 	}
-	return fmt.Sprintf("%s struct {\n%s}\n", head, str), nil
+	if nestedLevel == 0 {
+		return fmt.Sprintf("type %s struct {\n%s}\n", name, str)
+	} else {
+		return fmt.Sprintf("struct {\n%s%s}%s", str, getNestedSpaces(nestedLevel), getYamlTag(name))
+	}
 }
