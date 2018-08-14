@@ -4,15 +4,18 @@ import (
 	"os"
 	"io/ioutil"
 	"goreav/logging"
+	"html/template"
 )
 
 type IAppTransaction interface {
 	Apply() error
 	Revert() error
+	GetResult() interface{}
 }
 
 type AppTransactionStack []IAppTransaction
 
+//Create dir transaction
 type AppTransactionCreateDir struct {
 	Path string
 	Mode os.FileMode
@@ -26,18 +29,20 @@ func (t *AppTransactionCreateDir) Revert() error {
 	return os.RemoveAll(t.Path)
 }
 
+func (t *AppTransactionCreateDir) GetResult() interface{} {
+	return nil
+}
+
+//Create file transaction
 type AppTransactionCreateFile struct {
 	Path string
 	file *os.File
 }
 
-func (t *AppTransactionCreateFile) GetFile() *os.File {
-	return t.file
-}
-
 func (t *AppTransactionCreateFile) Apply() error {
 	var err error
 	t.file, err = os.Create(t.Path)
+	defer t.file.Close()
 	return err
 }
 
@@ -45,6 +50,11 @@ func (t *AppTransactionCreateFile) Revert() error {
 	return os.RemoveAll(t.Path)
 }
 
+func (t *AppTransactionCreateFile) GetResult() interface{} {
+	return t.file
+}
+
+//Append file transaction
 type AppTransactionAppendFile struct {
 	Path        string
 	Data        []byte
@@ -76,6 +86,47 @@ func (t *AppTransactionAppendFile) Revert() error {
 	return err
 }
 
+func (t *AppTransactionAppendFile) GetResult() interface{} {
+	return append(t.currentData, t.Data...)
+}
+
+//Read file transaction
+type AppTransactionCreateEnvironmentFile struct {
+	Path         string
+	TemplatePath string
+	data         []byte
+	file         *os.File
+}
+
+func (t *AppTransactionCreateEnvironmentFile) Apply() error {
+	var err error
+	t.data, err = ioutil.ReadFile(t.TemplatePath)
+	if err != nil {
+		return err
+	}
+
+	t.file, err = os.Create(t.Path)
+	if err != nil {
+		return err
+	}
+	defer t.file.Close()
+
+	type templateVars struct {Package string}
+
+	tml := template.Must(template.New("").Parse(string(t.data)))
+
+	return tml.Execute(t.file, templateVars{Package: "settings"})
+}
+
+func (t *AppTransactionCreateEnvironmentFile) Revert() error {
+	return os.RemoveAll(t.Path)
+}
+
+func (t *AppTransactionCreateEnvironmentFile) GetResult() interface{} {
+	return t.file
+}
+
+//Execute transaction
 func ExecTransactions(txs []IAppTransaction) error {
 	//Apply app transactions
 	var stopped *int

@@ -31,6 +31,25 @@ func CreateTypeStructure(data AppTemplate, name string, nestedLevel int) string 
 	for key, value := range data {
 		stringKey := key.(string)
 		switch value.(type) {
+		case []interface{}:
+			var iType, itemType, baseType = "", "", "[]interface{}"
+			for _, v := range value.([]interface{}) {
+				switch v.(type) {
+				case string:
+					itemType = "[]string"
+				case int:
+					itemType = "[]int"
+				}
+				if itemType != "" && iType == "" {
+					iType = itemType
+				}
+				if iType != "" && itemType != iType {
+					iType = baseType
+					break
+				}
+			}
+			//fmt spaces filedName fieldType
+			str += fmt.Sprintf("%s%s %s%s\n", getNestedSpaces(nestedLevel+1), strings.Title(stringKey), iType, getYamlTag(stringKey))
 		case AppTemplate:
 			//fmt spaces filedName struct
 			str += fmt.Sprintf("%s%s %s\n", getNestedSpaces(nestedLevel+1), strings.Title(stringKey), CreateTypeStructure(value.(AppTemplate), stringKey, nestedLevel+1))

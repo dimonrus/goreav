@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"errors"
 	"gopkg.in/yaml.v2"
+	"path/filepath"
 )
 
 var path string //full path to project
@@ -51,13 +52,21 @@ func RenderConfig(template AppTemplate) error {
 		}
 
 		//Render map[interface{}]interface{} to string
-		str := CreateTypeStructure(wholeTemplate, "Settings", 0)
+		str := CreateTypeStructure(wholeTemplate, "Config", 0)
 
 		configFilePath := configPath + "/" + KeyWordSettings + ".go"
 		transactions = append(transactions, &AppTransactionCreateFile{Path: configFilePath})
 
 		str = fmt.Sprintf("package %s\n\n%s", KeyWordSettings, str)
 		transactions = append(transactions, &AppTransactionAppendFile{Path: configFilePath, Data: []byte(str)})
+
+		envPath := configPath + "/environment.go"
+		templatePath, err := filepath.Abs("")
+		if err != nil {
+			return err
+		}
+		templatePath = templatePath + "/gen/tml/environment.tml"
+		transactions = append(transactions, &AppTransactionCreateEnvironmentFile{Path: envPath, TemplatePath:templatePath})
 	}
 
 	return nil

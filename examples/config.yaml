@@ -24,6 +24,10 @@ environment:
         - one
         - two
         - three
+      ivalues:
+        - 1
+        - 2
+        - 3
   qa:
     depends: global
   local:
