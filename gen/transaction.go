@@ -4,7 +4,7 @@ import (
 	"os"
 	"io/ioutil"
 	"goreav/logging"
-	"html/template"
+	"text/template"
 )
 
 type IAppTransaction interface {

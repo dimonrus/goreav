@@ -1,64 +1,64 @@
 package {{ .Package }}
 
 import (
-	"os"
-	"path/filepath"
-	"io/ioutil"
-	"gopkg.in/yaml.v2"
-	"regexp"
-	"strings"
-	"fmt"
+    "os"
+    "path/filepath"
+    "io/ioutil"
+    "gopkg.in/yaml.v2"
+    "regexp"
+    "strings"
+    "fmt"
 )
 
 var Cfg = Config{}
 var rootPath string
 
 func check(e error) {
-	if e != nil {
-		panic(e)
-	}
+    if e != nil {
+        panic(e)
+    }
 }
 
 func getConfig(env string, cfg Config) Config {
-	path := fmt.Sprintf("%s%s", GetRootPath(), "/config/yaml/"+env+".yaml")
-	data, err := ioutil.ReadFile(path)
-	check(err)
-	r, _ := regexp.Compile(`depends:(.*)`)
-	matches := r.FindStringSubmatch(string(data))
-	if len(matches) > 1 && strings.TrimSpace(matches[1]) != "" {
-		cfg = getConfig(strings.TrimSpace(matches[1]), cfg)
-	}
-	yaml.Unmarshal([]byte(data), &cfg)
-	return cfg
+    path := fmt.Sprintf("%s%s", GetRootPath(), "/config/yaml/"+env+".yaml")
+    data, err := ioutil.ReadFile(path)
+    check(err)
+    r, _ := regexp.Compile(`depends:(.*)`)
+    matches := r.FindStringSubmatch(string(data))
+    if len(matches) > 1 && strings.TrimSpace(matches[1]) != "" {
+        cfg = getConfig(strings.TrimSpace(matches[1]), cfg)
+    }
+    yaml.Unmarshal([]byte(data), &cfg)
+    return cfg
 }
 
 func GetRootPath() string {
-	if rootPath != "" {
-		return rootPath
-	}
+    if rootPath != "" {
+        return rootPath
+    }
 
-	rootPath, err := filepath.Abs("")
-	check(err)
+    rootPath, err := filepath.Abs("")
+    check(err)
 
-	r, _ := regexp.Compile(`^([\/]*.*[\/]app).*?`)
+    r, _ := regexp.Compile(`^([\/]*.*[\/]app).*?`)
 
-	matches := r.FindStringSubmatch(rootPath)
+    matches := r.FindStringSubmatch(rootPath)
 
-	if len(matches) < 1 {
-		rootPath = rootPath + "/app"
-	} else {
-		rootPath = matches[1]
-	}
+    if len(matches) < 1 {
+        rootPath = rootPath + "/app"
+    } else {
+        rootPath = matches[1]
+    }
 
-	return rootPath
+    return rootPath
 }
 
 func init() {
-	environment := os.Getenv("ENV")
+    environment := os.Getenv("ENV")
 
-	if environment == "" {
-		panic("Env is not defined")
-	}
+    if environment == "" {
+        panic("Env is not defined")
+    }
 
-	Cfg = getConfig(environment, Cfg)
+    Cfg = getConfig(environment, Cfg)
 }
