@@ -111,11 +111,14 @@ func (t *AppTransactionCreateEnvironmentFile) Apply() error {
 	}
 	defer t.file.Close()
 
-	type templateVars struct {Package string}
+	type templateVars struct {
+		Package string
+		ConfigType string
+	}
 
 	tml := template.Must(template.New("").Parse(string(t.data)))
 
-	return tml.Execute(t.file, templateVars{Package: "settings"})
+	return tml.Execute(t.file, templateVars{Package: "config", ConfigType: "settings"})
 }
 
 func (t *AppTransactionCreateEnvironmentFile) Revert() error {

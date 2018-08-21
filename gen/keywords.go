@@ -7,4 +7,5 @@ const (
 	KeyWordEnvironment = "environment"
 	KeyWordDepends     = "depends"
 	KeyWordSettings    = "settings"
+	KeyWordConfig      = "config"
 )

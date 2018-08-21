@@ -52,12 +52,12 @@ func RenderConfig(template AppTemplate) error {
 		}
 
 		//Render map[interface{}]interface{} to string
-		str := CreateTypeStructure(wholeTemplate, "Config", 0)
+		str := CreateTypeStructure(wholeTemplate, KeyWordSettings, 0)
 
-		configFilePath := configPath + "/" + KeyWordSettings + ".go"
+		configFilePath := configPath + "/" + KeyWordConfig + ".go"
 		transactions = append(transactions, &AppTransactionCreateFile{Path: configFilePath})
 
-		str = fmt.Sprintf("package %s\n\n%s", KeyWordSettings, str)
+		str = fmt.Sprintf("package %s\n\n%s", KeyWordConfig, str)
 		transactions = append(transactions, &AppTransactionAppendFile{Path: configFilePath, Data: []byte(str)})
 
 		envPath := configPath + "/environment.go"
@@ -65,7 +65,7 @@ func RenderConfig(template AppTemplate) error {
 		if err != nil {
 			return err
 		}
-		templatePath = templatePath + "/gen/tml/environment.tml"
+		templatePath = templatePath + "/gen/tml/config//environment.tml"
 		transactions = append(transactions, &AppTransactionCreateEnvironmentFile{Path: envPath, TemplatePath:templatePath})
 	}
 

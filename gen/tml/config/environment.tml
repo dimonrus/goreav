@@ -1,0 +1,42 @@
+package {{ .Package }}
+
+import (
+    "os"
+    "path/filepath"
+    "io/ioutil"
+    "gopkg.in/yaml.v2"
+    "regexp"
+    "strings"
+    "fmt"
+)
+
+var Cfg {{ .ConfigType }}
+
+func getConfig(env string, cfg {{ .ConfigType }}) {{ .ConfigType }} {
+    rootPath, err := filepath.Abs("")
+    if err != nil {
+        panic(err)
+    }
+    data, err := ioutil.ReadFile(fmt.Sprintf("%s%s", rootPath, "/config/yaml/"+env+".yaml"))
+    if err != nil {
+        panic(err)
+    }
+    r, _ := regexp.Compile(`depends:(.*)`)
+    matches := r.FindStringSubmatch(string(data))
+    if len(matches) > 1 && strings.TrimSpace(matches[1]) != "" {
+        cfg = getConfig(strings.TrimSpace(matches[1]), cfg)
+    }
+    err = yaml.Unmarshal([]byte(data), &cfg)
+    if err != nil {
+        panic(err)
+    }
+    return cfg
+}
+
+func init() {
+    if environment := os.Getenv("ENV"); environment != "" {
+        Cfg = getConfig(environment, Cfg)
+        return
+    }
+    panic("ENV is not defined")
+}
