@@ -7,16 +7,27 @@ import (
 	"path/filepath"
 )
 
-var path string //full path to project
+const AppTemplateFileMode = 0755
+
+var (
+	ProjectPath  string
+	TemplatePath string
+)
 
 var transactions AppTransactionStack
 
 func CreateProject(template AppTemplate) error {
+	var err error
 	//Project section is required
 	if project, ok := template[KeyWordProject]; ok == true {
+		TemplatePath, err = filepath.Abs("")
+		if err != nil {
+			return err
+		}
+		TemplatePath += "/gen/tml"
 		data := project.(AppTemplate)
-		path = fmt.Sprintf("%s/%s", data[KeyWordPath], data[KeyWordName])
-		transactions = append(transactions, &AppTransactionCreateDir{Path: path, Mode: 0755})
+		ProjectPath = fmt.Sprintf("%s/%s", data[KeyWordPath], data[KeyWordName])
+		transactions = append(transactions, &AppTransactionCreateDir{Path: ProjectPath, Mode: AppTemplateFileMode})
 	} else {
 		return errors.New("template has no project section")
 	}
@@ -27,11 +38,11 @@ func CreateProject(template AppTemplate) error {
 func RenderConfig(template AppTemplate) error {
 	//environment section is not required
 	if environment, ok := template[KeyWordEnvironment]; ok == true {
-		configPath := path + "/config"
+		configPath := ProjectPath + "/config"
 		yamlConfigPath := configPath + "/yaml"
 		//Create config dirs
-		transactions = append(transactions, &AppTransactionCreateDir{Path: configPath, Mode: 0755})
-		transactions = append(transactions, &AppTransactionCreateDir{Path: yamlConfigPath, Mode: 0755})
+		transactions = append(transactions, &AppTransactionCreateDir{Path: configPath, Mode: AppTemplateFileMode})
+		transactions = append(transactions, &AppTransactionCreateDir{Path: yamlConfigPath, Mode: AppTemplateFileMode})
 
 		//Create project config struct
 		var wholeTemplate = make(AppTemplate)
@@ -61,13 +72,48 @@ func RenderConfig(template AppTemplate) error {
 		transactions = append(transactions, &AppTransactionAppendFile{Path: configFilePath, Data: []byte(str)})
 
 		envPath := configPath + "/environment.go"
-		templatePath, err := filepath.Abs("")
-		if err != nil {
-			return err
-		}
-		templatePath = templatePath + "/gen/tml/config//environment.tml"
-		transactions = append(transactions, &AppTransactionCreateEnvironmentFile{Path: envPath, TemplatePath:templatePath})
+		envTemplatePath := TemplatePath + "/config/environment.tml"
+
+		templateData := struct {
+			Package    string
+			ConfigType string
+		}{Package: "config", ConfigType: "settings"}
+
+		transactions = append(transactions, &AppTransactionCreateFileFromTemplate{
+			Path:         envPath,
+			TemplatePath: envTemplatePath,
+			Data:         templateData,
+		})
 	}
+
+	return nil
+}
+
+func CreateMainFile(template AppTemplate) error {
+	return nil
+}
+
+func RenderLogger(template AppTemplate) error {
+	//for key, value := range template {
+	//
+	//}
+	helperDir := ProjectPath + "/helper"
+	transactions = append(transactions, &AppTransactionCreateDir{Path: helperDir, Mode: AppTemplateFileMode})
+
+	loggingDir := helperDir + "/logging"
+	transactions = append(transactions, &AppTransactionCreateDir{Path: loggingDir, Mode: AppTemplateFileMode})
+
+	loggerPath := loggingDir + "/logger.go"
+	templatePath := TemplatePath + "/helper/logging/logger.tml"
+	templateData := struct {
+		Loggers []string
+	}{Loggers: []string{"Query"}}
+
+	transactions = append(transactions, &AppTransactionCreateFileFromTemplate{
+		Path:         loggerPath,
+		TemplatePath: templatePath,
+		Data:         templateData,
+	})
 
 	return nil
 }
@@ -82,6 +128,16 @@ func ParseTemplate(template AppTemplate) error {
 
 	//Render config
 	if err := RenderConfig(template); err != nil {
+		return err
+	}
+
+	//Render logger
+	if err := RenderLogger(template); err != nil {
+		return err
+	}
+
+	//Create Main file
+	if err := CreateMainFile(template); err != nil {
 		return err
 	}
 

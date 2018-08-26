@@ -37,3 +37,7 @@ environment:
       textValuse: some
       textValue: some text
       other: false
+serve:
+  web:
+    route:
+      - health

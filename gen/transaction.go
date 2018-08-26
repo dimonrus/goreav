@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"goreav/logging"
 	"text/template"
+	"strings"
 )
 
 type IAppTransaction interface {
@@ -91,14 +92,15 @@ func (t *AppTransactionAppendFile) GetResult() interface{} {
 }
 
 //Read file transaction
-type AppTransactionCreateEnvironmentFile struct {
+type AppTransactionCreateFileFromTemplate struct {
 	Path         string
 	TemplatePath string
+	Data         interface{}
 	data         []byte
 	file         *os.File
 }
 
-func (t *AppTransactionCreateEnvironmentFile) Apply() error {
+func (t *AppTransactionCreateFileFromTemplate) Apply() error {
 	var err error
 	t.data, err = ioutil.ReadFile(t.TemplatePath)
 	if err != nil {
@@ -111,21 +113,20 @@ func (t *AppTransactionCreateEnvironmentFile) Apply() error {
 	}
 	defer t.file.Close()
 
-	type templateVars struct {
-		Package string
-		ConfigType string
+	funcMap := template.FuncMap{
+		"ToUpper": strings.ToUpper,
 	}
 
-	tml := template.Must(template.New("").Parse(string(t.data)))
+	tml := template.Must(template.New("").Funcs(funcMap).Parse(string(t.data)))
 
-	return tml.Execute(t.file, templateVars{Package: "config", ConfigType: "settings"})
+	return tml.Execute(t.file, t.Data)
 }
 
-func (t *AppTransactionCreateEnvironmentFile) Revert() error {
+func (t *AppTransactionCreateFileFromTemplate) Revert() error {
 	return os.RemoveAll(t.Path)
 }
 
-func (t *AppTransactionCreateEnvironmentFile) GetResult() interface{} {
+func (t *AppTransactionCreateFileFromTemplate) GetResult() interface{} {
 	return t.file
 }
 

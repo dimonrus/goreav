@@ -8,4 +8,9 @@ const (
 	KeyWordDepends     = "depends"
 	KeyWordSettings    = "settings"
 	KeyWordConfig      = "config"
+	KeyWordServe       = "serve"
+	KeyWordServeWeb    = "web"
+	KeyWordServeCli    = "cli"
+	KeyWordServeSocket = "socket"
+	KeyWordServeRabbit = "rabbit"
 )
