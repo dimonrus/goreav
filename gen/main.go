@@ -118,6 +118,11 @@ func RenderLogger(template AppTemplate) error {
 	return nil
 }
 
+func FormatProject() error {
+	transactions = append(transactions, &AppTransactionFormatProject{Path: ProjectPath + "/..."})
+	return nil
+}
+
 //Function performs parse of map[string]interface and populate transaction stack
 //After that all transaction executed by order from 0 to n
 func ParseTemplate(template AppTemplate) error {
@@ -141,6 +146,15 @@ func ParseTemplate(template AppTemplate) error {
 		return err
 	}
 
+	//format project
+	if err := FormatProject(); err != nil {
+		return err
+	}
+
 	//Exec all transaction
-	return ExecTransactions(transactions)
+	if err := ExecTransactions(transactions); err != nil {
+		return err
+	}
+
+	return nil
 }
