@@ -1,0 +1,34 @@
+package main
+
+import (
+	"flag"
+	"{{ .Project }}/app/config"
+)
+
+var args = Arguments {
+	"type":   new(string),
+	"stype":  new(string),
+	"name":   new(string),
+	"sname":  new(string),
+	"action": new(string),
+	"number": new(uint),
+}
+
+func init() {
+	flag.StringVar(args["type"], "t", "", " application type")
+	flag.StringVar(args["stype"], "st", "", " sub type argument")
+	flag.StringVar(args["name"], "n", "", " name argument")
+	flag.StringVar(args["sname"], "sn", "", " sub name argument")
+	flag.StringVar(args["action"], "a", "", " action argument")
+	flag.UintVar(args["number"], "num", "", " number argument")
+}
+
+func main() {
+	flag.Parse()
+	switch cliArgs.AppType { {{ range $key, $type := .Apps }}
+	case {{ $key }}:
+        //server.WebApp{config.Settings}.Start(cliArgs.Web){{ end }})
+	default:
+		logging.Error.Fatalf("incorrect application type: %s", cliArgs.AppType)
+	}
+}

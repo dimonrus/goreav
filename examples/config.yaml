@@ -41,3 +41,5 @@ serve:
   web:
     route:
       - health
+  command:
+  migration:

@@ -90,13 +90,28 @@ func RenderConfig(template AppTemplate) error {
 }
 
 func CreateMainFile(template AppTemplate) error {
+	if serve, ok := template[KeyWordServe]; ok == true {
+		project := template[KeyWordProject].(AppTemplate)
+		mainPath := ProjectPath + "/main.go"
+		templatePath := TemplatePath + "/main.tml"
+		templateData := struct {
+			Project string
+			Apps AppTemplate
+		}{
+			Project: project[KeyWordName].(string),
+			Apps: serve.(AppTemplate),
+		}
+
+		transactions = append(transactions, &AppTransactionCreateFileFromTemplate{
+			Path: mainPath,
+			TemplatePath: templatePath,
+			Data:         templateData,
+		})
+	}
 	return nil
 }
 
 func RenderLogger(template AppTemplate) error {
-	//for key, value := range template {
-	//
-	//}
 	helperDir := ProjectPath + "/helper"
 	transactions = append(transactions, &AppTransactionCreateDir{Path: helperDir, Mode: AppTemplateFileMode})
 
